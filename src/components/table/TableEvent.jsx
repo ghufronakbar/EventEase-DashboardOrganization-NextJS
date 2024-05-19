@@ -1,10 +1,10 @@
 import {
+  Alert,
+  AlertIcon,
   Box,
   Button,
   Center,
-  Flex,
   Image,
-  Spacer,
   Table,
   TableContainer,
   Tbody,
@@ -15,29 +15,45 @@ import {
   Tr,
   useToast,
 } from "@chakra-ui/react";
-import axiosInstanceAuthorization from "../../lib/axiosInstanceAuthorization"; // Pastikan Anda mengimpor api dari api.js
+import axiosInstanceAuthorization from "../../lib/axiosInstanceAuthorization";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 import { Loading } from "../Loading";
-import { useState } from "react";
 import { primaryColor, secondaryColor, tersierColor } from "@/lib/color";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
+import { useSearchParams } from "next/navigation";
 
 export function TableEvent() {
   const router = useRouter();
   const toast = useToast();
-  const [loading, setLoading] = useState(true);
+  const searchParams = useSearchParams();
+  const queryTime = searchParams.get("time");
+  const queryStatus = searchParams.get("status");
 
-  const { data: dataEvent, refetch: refetchDataEvent } = useQuery({
-    queryKey: ["events"],
+  const { data: dataEvent, isLoading, isError } = useQuery({
+    queryKey: ["events", queryTime, queryStatus],
     queryFn: async () => {
-      const dataResponse = await axiosInstanceAuthorization.get("/events");
-      setLoading(false);
-      return dataResponse.data; // Jangan lupa untuk mengambil data dari respons
+      const endpoint = (queryTime=='' && queryStatus=='')
+        ? "/events"
+        : `/events?time=${queryTime}&status=${queryStatus}`;
+      const dataResponse = await axiosInstanceAuthorization.get(endpoint);
+      return dataResponse.data;
     },
   });
 
-  if (loading) return <Loading />;
+  const noData = () => {
+    if (dataEvent && dataEvent.length === 0) {
+      return (
+        <Alert status="warning">
+          <AlertIcon />
+          There's no data event
+        </Alert>
+      );
+    }
+  };
+
+  if (isLoading) return <Loading />;
+  if (isError) return <Text>Error loading data</Text>;
 
   return (
     <TableContainer>
@@ -48,7 +64,6 @@ export function TableEvent() {
             <Th></Th>
             <Th>Event Name</Th>
             <Th>Location</Th>
-
             <Th>
               <Center>Event Type</Center>
             </Th>
@@ -59,7 +74,7 @@ export function TableEvent() {
           </Tr>
         </Thead>
         <Tbody>
-          {dataEvent.map((event, index) => (
+          {dataEvent && dataEvent.map((event, index) => (
             <Tr key={event.id_event}>
               <Td>{index + 1}</Td>
               <Td>
@@ -67,10 +82,18 @@ export function TableEvent() {
                   src={event.event_image}
                   alt={event.event_name}
                   boxSize="50px"
+                  borderRadius="50%"
+                  objectFit="cover"
                 />
               </Td>
               <Td>{event.event_name}</Td>
-              <Td>{event.location}<a href={event.url_google_map}target="_blank">  <ExternalLinkIcon /></a></Td>
+              <Td>
+                {event.location}
+                <a href={event.url_google_map} target="_blank">
+                  {" "}
+                  <ExternalLinkIcon />
+                </a>
+              </Td>
               <Td>
                 <Center>
                   <Box
@@ -126,18 +149,39 @@ export function TableEvent() {
                 </Center>
               </Td>
               <Td>
-                <Button
-                  onClick={() =>
-                    router.push(`/admin/event/${event.id_event}`)
-                  }
-                >
-                  Edit
-                </Button>
+                {event.status == 0 ? (
+                  <Button
+                    onClick={() =>
+                      router.push(`/admin/event/${event.id_event}`)
+                    }
+                  >
+                    Edit
+                  </Button>
+                ) : event.status == 1 ? (
+                  <Button
+                    bg="red"
+                    color="white"
+                    onClick={() => handleDelete(event.id_event)}
+                  >
+                    Delete
+                  </Button>
+                ) : event.status == 2 ? (
+                  <Button
+                    onClick={() =>
+                      router.push(`/admin/event/${event.id_event}`)
+                    }
+                  >
+                    Edit
+                  </Button>
+                ) : (
+                  ""
+                )}
               </Td>
             </Tr>
           ))}
         </Tbody>
       </Table>
+      {noData()}
     </TableContainer>
   );
 }
