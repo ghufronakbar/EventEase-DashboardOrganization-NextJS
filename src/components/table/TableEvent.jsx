@@ -22,6 +22,7 @@ import { Loading } from "../Loading";
 import { primaryColor, secondaryColor, tersierColor } from "@/lib/color";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 import { useSearchParams } from "next/navigation";
+import formatDate from "@/lib/formatDate";
 
 export function TableEvent() {
   const router = useRouter();
@@ -30,12 +31,17 @@ export function TableEvent() {
   const queryTime = searchParams.get("time");
   const queryStatus = searchParams.get("status");
 
-  const { data: dataEvent, isLoading, isError } = useQuery({
+  const {
+    data: dataEvent,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["events", queryTime, queryStatus],
     queryFn: async () => {
-      const endpoint = (queryTime=='' && queryStatus=='')
-        ? "/events"
-        : `/events?time=${queryTime}&status=${queryStatus}`;
+      const endpoint =
+        queryTime == "" && queryStatus == ""
+          ? "/events"
+          : `/events?time=${queryTime}&status=${queryStatus}`;
       const dataResponse = await axiosInstanceAuthorization.get(endpoint);
       return dataResponse.data;
     },
@@ -57,6 +63,7 @@ export function TableEvent() {
 
   return (
     <TableContainer>
+      <Button bg={primaryColor} color='white' mb={2} onClick={()=>{router.push(`/admin/event/add`)}}>Add Event</Button>
       <Table variant="simple">
         <Thead>
           <Tr>
@@ -64,121 +71,131 @@ export function TableEvent() {
             <Th></Th>
             <Th>Event Name</Th>
             <Th>Location</Th>
-            <Th>
-              <Center>Event Type</Center>
+            <Th rowSpan={2}>
+              <Text>Event Start</Text>
+              <Text>Event End</Text>
             </Th>
             <Th>
               <Center>Status</Center>
             </Th>
-            <Th>Action</Th>
+            <Th></Th>
           </Tr>
         </Thead>
         <Tbody>
-          {dataEvent && dataEvent.map((event, index) => (
-            <Tr key={event.id_event}>
-              <Td>{index + 1}</Td>
-              <Td>
-                <Image
-                  src={event.event_image}
-                  alt={event.event_name}
-                  boxSize="50px"
-                  borderRadius="50%"
-                  objectFit="cover"
-                />
-              </Td>
-              <Td>{event.event_name}</Td>
-              <Td>
-                {event.location}
-                <a href={event.url_google_map} target="_blank">
-                  {" "}
-                  <ExternalLinkIcon />
-                </a>
-              </Td>
-              <Td>
-                <Center>
-                  <Box
-                    as="button"
-                    borderRadius="md"
-                    bg={primaryColor}
-                    color="white"
-                    px={4}
-                    h={8}
-                  >
-                    <Text>{event.event_type}</Text>
-                  </Box>
-                </Center>
-              </Td>
-              <Td>
-                <Center>
-                  {event.status == 0 ? (
-                    <Box
-                      as="button"
-                      borderRadius="md"
-                      bg={tersierColor}
-                      color="white"
-                      px={4}
-                      h={8}
-                    >
-                      <Text>Pending</Text>
-                    </Box>
-                  ) : event.status == 1 ? (
-                    <Box
-                      as="button"
-                      borderRadius="md"
-                      bg={secondaryColor}
-                      color="white"
-                      px={4}
-                      h={8}
-                    >
-                      <Text>Rejected</Text>
-                    </Box>
-                  ) : event.status == 2 ? (
-                    <Box
-                      as="button"
-                      borderRadius="md"
-                      bg={primaryColor}
-                      color="white"
-                      px={4}
-                      h={8}
-                    >
-                      <Text>Approved</Text>
-                    </Box>
-                  ) : (
-                    ""
-                  )}
-                </Center>
-              </Td>
-              <Td>
-                {event.status == 0 ? (
-                  <Button
-                    onClick={() =>
-                      router.push(`/admin/event/${event.id_event}`)
-                    }
-                  >
-                    Edit
-                  </Button>
-                ) : event.status == 1 ? (
-                  <Button
-                    bg="red"
-                    color="white"
-                    onClick={() => handleDelete(event.id_event)}
-                  >
-                    Delete
-                  </Button>
-                ) : event.status == 2 ? (
-                  <Button
-                    onClick={() =>
-                      router.push(`/admin/event/${event.id_event}`)
-                    }
-                  >
-                    Edit
-                  </Button>
-                ) : (
-                  ""
-                )}
-              </Td>
-            </Tr>
-          ))}
+          {dataEvent &&
+            dataEvent.map((event, index) => (
+              <Tr key={event.id_event}>
+                <Td>{index + 1}</Td>
+                <Td>
+                  <Image
+                    src={event.event_image}
+                    alt={event.event_name}
+                    boxSize="50px"
+                    borderRadius="30%"
+                    objectFit="cover"
+                  />
+                </Td>
+                <Td>{event.event_name}</Td>
+                <Td>
+                  {event.location}
+                  <a href={event.url_google_map} target="_blank">
+                    {" "}
+                    <ExternalLinkIcon />
+                  </a>
+                </Td>
+                <Td>
+                  <Text>{formatDate(event.event_start)}</Text>
+                  <Text>{formatDate(event.event_end)}</Text>
+                </Td>
+                <Td>
+                  <Center>
+                    {event.status == 0 ? (
+                      <Box
+                        as="button"
+                        borderRadius="md"
+                        bg={tersierColor}
+                        color="white"
+                        px={4}
+                        h={8}
+                      >
+                        <Text>Pending</Text>
+                      </Box>
+                    ) : event.status == 1 ? (
+                      <Box
+                        as="button"
+                        borderRadius="md"
+                        bg={secondaryColor}
+                        color="white"
+                        px={4}
+                        h={8}
+                      >
+                        <Text>Rejected</Text>
+                      </Box>
+                    ) : event.status == 2 ? (
+                      <Box
+                        as="button"
+                        borderRadius="md"
+                        bg={primaryColor}
+                        color="white"
+                        px={4}
+                        h={8}
+                      >
+                        <Text>Approved</Text>
+                      </Box>
+                    ) : (
+                      ""
+                    )}
+                  </Center>
+                </Td>
+                <Td>
+                  <Center>
+                    {event.status == 0 ? (
+                      <>
+                      <Button
+                        bg="red"
+                        color="white"
+                        mx={2}
+                        onClick={() => handleDelete(event.id_event)}
+                      >
+                        Delete
+                      </Button>
+                      <Button
+                      mx={2}
+                        onClick={() =>
+                          router.push(`/admin/event/${event.id_event}`)
+                        }
+                      >
+                        Detail
+                      </Button>
+                    </>
+                    ) : event.status == 1 ? (
+                      <>
+                        <Button
+                          bg="red"
+                          color="white"
+                          mx={2}
+                          onClick={() => handleDelete(event.id_event)}
+                        >
+                          Delete
+                        </Button>                       
+                      </>
+                    ) : event.status == 2 ? (
+                      <>
+                        <Button
+                          onClick={() =>
+                            router.push(`/admin/event/${event.id_event}`)
+                          }
+                        >
+                          Detail
+                        </Button>
+                      </>
+                    ) : (
+                      ""
+                    )}
+                  </Center>
+                </Td>
+              </Tr>
+            ))}
         </Tbody>
       </Table>
       {noData()}

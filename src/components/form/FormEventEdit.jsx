@@ -18,6 +18,9 @@ import {
   Th,
   Tbody,
   Td,
+  AlertIcon,
+  Alert,
+  HStack,
 } from "@chakra-ui/react";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/router";
@@ -99,6 +102,15 @@ export function FormEventEdit() {
         formData.append("site_plan_image", sitePlanImageRef.current.files[0]);
       }
 
+      if (event.event_start > event.event_end) {
+        return toast({
+          title: "Event end must not be earlier than event start",
+          status: "error",
+          position: "bottom-right",
+          isClosable: true,
+        });
+      }
+
       await axiosInstanceAuthorization.put(
         `/event/edit/${id_event}`,
         formData,
@@ -109,14 +121,6 @@ export function FormEventEdit() {
         }
       );
 
-      if (event.event_start > event.event_end) {
-        return toast({
-          title: "Event end must not be earlier than event start",
-          status: "error",
-          position: "bottom-right",
-          isClosable: true,
-        });
-      }
       toast({
         title: "Event has been updated",
         status: "success",
@@ -138,6 +142,20 @@ export function FormEventEdit() {
 
   if (loading) return <Loading />;
 
+  const isDisabled =
+    event?.event_status === "Past" || event?.event_status === "On Going";
+
+  const nonEditable = () => {
+    if (event?.event_status === "Past" || event?.event_status === "On Going") {
+      return (
+        <Alert status="warning">
+          <AlertIcon />
+          Events that are already running cannot be edited
+        </Alert>
+      );
+    }
+  };
+
   return (
     <>
       {event && (
@@ -149,6 +167,7 @@ export function FormEventEdit() {
             overflow="hidden"
             mt={4}
           >
+            {nonEditable()}
             <Flex>
               <Box
                 p={8}
@@ -182,6 +201,7 @@ export function FormEventEdit() {
                   name="event_image"
                   ref={eventImageRef}
                   onChange={handleEventImageChange}
+                  disabled={isDisabled}
                 />
               </Box>
               <Spacer flex={1} />
@@ -219,6 +239,7 @@ export function FormEventEdit() {
                   name="site_plan_image"
                   ref={sitePlanImageRef}
                   onChange={handleSitePlanImageChange}
+                  disabled={isDisabled}
                 />
               </Box>
             </Flex>
@@ -239,6 +260,7 @@ export function FormEventEdit() {
                       onChange={(e) =>
                         setEvent({ ...event, event_name: e.target.value })
                       }
+                      disabled={isDisabled}
                     />
                   </FormControl>
 
@@ -250,6 +272,7 @@ export function FormEventEdit() {
                       onChange={(e) =>
                         setEvent({ ...event, description: e.target.value })
                       }
+                      disabled={isDisabled}
                     />
                   </FormControl>
 
@@ -261,6 +284,7 @@ export function FormEventEdit() {
                       onChange={(e) =>
                         setEvent({ ...event, location: e.target.value })
                       }
+                      disabled={isDisabled}
                     />
                   </FormControl>
 
@@ -272,6 +296,7 @@ export function FormEventEdit() {
                       onChange={(e) =>
                         setEvent({ ...event, event_type: e.target.value })
                       }
+                      disabled={isDisabled}
                     />
                   </FormControl>
 
@@ -286,6 +311,7 @@ export function FormEventEdit() {
                           payment_information: e.target.value,
                         })
                       }
+                      disabled={isDisabled}
                     />
                   </FormControl>
 
@@ -303,6 +329,7 @@ export function FormEventEdit() {
                           event_start: new Date(e.target.value).toISOString(),
                         })
                       }
+                      disabled={isDisabled}
                     />
                   </FormControl>
 
@@ -320,9 +347,11 @@ export function FormEventEdit() {
                           event_end: new Date(e.target.value).toISOString(),
                         })
                       }
+                      disabled={isDisabled}
                     />
                   </FormControl>
-                  <FormLabel mt={4}>List Ticket</FormLabel>
+                  <Flex> <FormLabel mt={4}>List Ticket</FormLabel><Spacer/> <Button>Add Ticket</Button></Flex>
+                 
                   <Table variant="simple">
                     <Thead>
                       <Tr>
@@ -357,11 +386,14 @@ export function FormEventEdit() {
                               alignItems="center"
                               justifyContent="center"
                               onClick={() =>
-                                router.push(`/admin/event/ticket/${ticket.id_ticket}`)
+                                router.push(
+                                  `/admin/event/ticket/${ticket.id_ticket}`
+                                )
                               }
+                              disabled={isDisabled}
                             >
                               <EditIcon color="white" />
-                            </Box>                            
+                            </Box>
                             <Box
                               bg="red"
                               as="button"
@@ -371,6 +403,7 @@ export function FormEventEdit() {
                               display="flex"
                               alignItems="center"
                               justifyContent="center"
+                              disabled={isDisabled}
                             >
                               <DeleteIcon color="white" />
                             </Box>
@@ -383,7 +416,14 @@ export function FormEventEdit() {
               </Box>
             </Flex>
             <VStack mt={4}>
-              <Button onClick={handleUpdate}>Update</Button>
+              {event.event_status == "Past" ||
+              event.event_status == "On Going" ? (
+                ""
+              ) : (
+                <Button onClick={handleUpdate} disabled={isDisabled}>
+                  Update
+                </Button>
+              )}
             </VStack>
           </Box>
         </form>

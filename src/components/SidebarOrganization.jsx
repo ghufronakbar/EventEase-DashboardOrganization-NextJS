@@ -1,4 +1,4 @@
-import { Box, HStack, Text } from "@chakra-ui/react";
+import { Box, Center, HStack, Stack, Text } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { Menu, MenuItem, Sidebar, SubMenu } from "react-pro-sidebar";
 import { useContext, useState } from "react";
@@ -41,15 +41,16 @@ export function SidebarMenu() {
             overflow="hidden"
             as="button"
           >
-            <HStack
+            <Stack
               onClick={() => {
                 router.push(`/admin/profile`);
               }}
             >
-              {profile.logo ? (
+              <Center>
+                {profile.logo ? (
                 <Box
-                  width="40px"
-                  height="40px"
+                  width="70px"
+                  height="70px"
                   borderRadius="50%"
                   overflow="hidden"
                   position="relative"
@@ -57,17 +58,21 @@ export function SidebarMenu() {
                   <Image
                     src={profile.logo}
                     alt="Organization Logo"
-                    layout="fill"
+                    layout="fill"                    
+                    boxSize="50px"
+                    borderRadius="50%"
                     objectFit="cover"
                   />
                 </Box>
               ) : (
                 ""
               )}
+              </Center>
+              
               <Text as="b" fontSize="2xl" color={secondaryColor}>
                 {profile.organization_name}
               </Text>
-            </HStack>
+            </Stack>
           </Box>
 
           <br />
