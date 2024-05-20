@@ -11,7 +11,7 @@ export default function Custom404() {
       minHeight="100vh"
       flexDirection="column"
     >
-      <Heading>Goffee: Page 404 - Not Found</Heading>
+      <Heading>Event Ease: Page 404 - Not Found</Heading>
       <Image
       src='/404.jpg'
       width={500}
