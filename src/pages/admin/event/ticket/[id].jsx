@@ -1,11 +1,10 @@
 import { HeadAdmin } from "@/components/HeadAdmin";
-import { FormEventEdit } from "@/components/form/FormEventEdit";
 import { Container, Flex } from "@chakra-ui/react";
-import Event from ".";
 import { withAuth } from "@/lib/authorization";
 import { SidebarMenu } from "@/components/SidebarOrganization";
+import { FormTicketEdit } from "@/components/form/FormTicketEdit";
 
-function EventID() {
+function TicketId() {
   return (
     <>
       <HeadAdmin />
@@ -13,7 +12,7 @@ function EventID() {
         <Flex>
           <SidebarMenu flex={1} />
           <Container maxW="80%">
-            <FormEventEdit />
+            <FormTicketEdit />
           </Container>
         </Flex>
       </main>
@@ -21,4 +20,4 @@ function EventID() {
   );
 }
 
-export default withAuth(EventID);
+export default withAuth(TicketId);
