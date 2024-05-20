@@ -28,6 +28,11 @@ import {
   ModalCloseButton,
   ModalFooter,
   ModalBody,
+  NumberInput,
+  NumberInputField,
+  NumberInputStepper,
+  NumberIncrementStepper,
+  NumberDecrementStepper,
 } from "@chakra-ui/react";
 import { useState, useRef } from "react";
 import { useRouter } from "next/router";
@@ -50,11 +55,13 @@ export function FormEventEdit() {
   const [isAddTicketOpen, setIsAddTicketOpen] = useState(false);
   const [type, setType] = useState();
   const [amount, setAmount] = useState();
+  const [sold, setSold] = useState();
   const [price, setPrice] = useState();
   const [date_start, setDate_start] = useState();
   const [date_end, setDate_end] = useState();
   const [idTicket, setIdTicket] = useState();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isSetAmountOpen, setIsSetAmountOpen] = useState(false);
 
   // Fungsi untuk menangani perubahan pada input file gambar event
   const handleEventImageChange = (event) => {
@@ -80,9 +87,8 @@ export function FormEventEdit() {
     },
   });
 
-  
-  const modalConfirmDelete = () =>{
-    return(
+  const modalConfirmDelete = () => {
+    return (
       <Modal isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)}>
         <ModalOverlay />
         <ModalContent>
@@ -100,8 +106,74 @@ export function FormEventEdit() {
           </ModalFooter>
         </ModalContent>
       </Modal>
-    )
-  }
+    );
+  };
+
+  const modalSetAmount = () => {
+    return (
+      <Modal isOpen={isSetAmountOpen} onClose={() => setIsSetAmountOpen(false)}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Set ticket amount</ModalHeader>
+          <ModalBody>
+            <Alert my={2} status="info">
+              <AlertIcon />
+              Amount tickets can't be less than sold tickets
+            </Alert>
+            <NumberInput value={amount} min={sold}>
+              <NumberInputField onChange={(e) => setAmount(e.target.value)} />
+              <NumberInputStepper>
+                <NumberIncrementStepper
+                  onClick={() => {
+                    setAmount(amount + 1);
+                  }}
+                />
+                <NumberDecrementStepper
+                  onClick={() => {
+                    setAmount(amount - 1);
+                  }}
+                />
+              </NumberInputStepper>
+            </NumberInput>
+          </ModalBody>
+          <ModalCloseButton />
+          <ModalFooter>
+            <Button
+              bg={primaryColor}
+              color={white}
+              onClick={() => {
+                handleSetAmount(idTicket);
+              }}
+            >
+              Set Amount
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    );
+  };
+
+  const handleSetAmount = async (id_ticket) => {
+    if (amount < sold) {
+      return toast({
+        title: "Amount can't be less than sold tickets",
+        status: "error",
+        position: "bottom-right",
+        isClosable: true,
+      });
+    }
+    await axiosInstanceAuthorization.put(`/ticket/set-amount/${id_ticket}`, {
+      amount,
+    });
+    toast({
+      title: "Amount has been edited",
+      status: "info",
+      position: "bottom-right",
+      isClosable: true,
+    });
+    refetchDataEvent();
+    setIsSetAmountOpen(false);
+  };
 
   const handleDelete = async (id_ticket) => {
     await axiosInstanceAuthorization.delete(`/ticket/delete/${id_ticket}`);
@@ -112,7 +184,7 @@ export function FormEventEdit() {
       isClosable: true,
     });
     refetchDataEvent();
-    setIsDeleteOpen(false)
+    setIsDeleteOpen(false);
   };
 
   const modalAddTicket = () => {
@@ -163,12 +235,13 @@ export function FormEventEdit() {
           </ModalBody>
           <ModalFooter>
             <Button
-              colorScheme="red"
+              bg={primaryColor}
+              color={white}
               onClick={() => {
                 handleAddTicket();
               }}
             >
-              Finish
+              Add Ticket
             </Button>
           </ModalFooter>
         </ModalContent>
@@ -205,7 +278,7 @@ export function FormEventEdit() {
         });
       } else if (date_start > event.event_end || date_end > event.event_end) {
         return toast({
-          title: "Date must not be sooner than event start",
+          title: "Date must not be sooner than event end",
           status: "error",
           position: "bottom-right",
           isClosable: true,
@@ -592,7 +665,17 @@ export function FormEventEdit() {
               {event.tickets.map((ticket) => (
                 <Tr key={ticket.id_ticket}>
                   <Td>{ticket.ticket_type}</Td>
-                  <Td>{ticket.amount}</Td>
+                  <Td>
+                    {ticket.amount}{" "}
+                    <EditIcon
+                      onClick={() => {
+                        setIsSetAmountOpen(true);
+                        setIdTicket(ticket.id_ticket);
+                        setAmount(ticket.amount);
+                        setSold(ticket.sold);
+                      }}
+                    />
+                  </Td>
                   <Td>{ticket.sold}</Td>
                   <Td>Rp {ticket.price}</Td>
                   <Td>{new Date(ticket.date_start).toLocaleString()}</Td>
@@ -622,9 +705,9 @@ export function FormEventEdit() {
                           display="flex"
                           alignItems="center"
                           justifyContent="center"
-                          onClick={()=>{
-                            setIdTicket(ticket.id_ticket)
-                            setIsDeleteOpen(true)
+                          onClick={() => {
+                            setIdTicket(ticket.id_ticket);
+                            setIsDeleteOpen(true);
                           }}
                         >
                           <DeleteIcon color="white" />
@@ -647,7 +730,7 @@ export function FormEventEdit() {
                           onClick={() => handleEditTicket(ticket.id_ticket)}
                         >
                           <EditIcon color="white" />
-                        </Box>                    
+                        </Box>
                       </>
                     ) : (
                       ""
@@ -658,6 +741,7 @@ export function FormEventEdit() {
             </Tbody>
           </Table>
           {modalAddTicket()}
+          {modalSetAmount()}
           {modalConfirmDelete()}
         </>
       )}

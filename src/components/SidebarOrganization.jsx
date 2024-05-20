@@ -146,7 +146,7 @@ export function SidebarMenu() {
                 ✅ Approved
               </MenuItem>
             </SubMenu>
-            <SubMenu label="🧾 Orders">
+            <SubMenu label="💵 Orders">
               <MenuItem
                 onClick={() => {
                   router.push(`/admin/order`);
