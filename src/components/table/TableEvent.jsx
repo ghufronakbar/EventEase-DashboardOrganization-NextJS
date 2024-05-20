@@ -88,7 +88,7 @@ export function TableEvent() {
       isClosable: true,
     });
     refetchDataEvent();
-    setIsDeleteOpen(false)
+    setIsDeleteOpen(false);
   };
 
   const alertMessage = () => {
@@ -112,8 +112,8 @@ export function TableEvent() {
     ) : null;
   };
 
-  const modalConfirmDelete = () =>{
-    return(
+  const modalConfirmDelete = () => {
+    return (
       <Modal isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)}>
         <ModalOverlay />
         <ModalContent>
@@ -131,8 +131,8 @@ export function TableEvent() {
           </ModalFooter>
         </ModalContent>
       </Modal>
-    )
-  }
+    );
+  };
   if (isLoading) return <Loading />;
   if (isError) return <Text>Error loading data</Text>;
 

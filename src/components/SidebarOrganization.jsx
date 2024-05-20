@@ -146,38 +146,45 @@ export function SidebarMenu() {
                 ✅ Approved
               </MenuItem>
             </SubMenu>
-            <SubMenu label="💵 Orders">
+            <SubMenu label="📒 Orders">
               <MenuItem
                 onClick={() => {
-                  router.push(`/admin/order`);
+                  router.push(`/admin/orders`);
                 }}
               >
                 🎫 All Order
               </MenuItem>
               <MenuItem
                 onClick={() => {
-                  router.push(`/admin/order?paid=0`);
+                  router.push(`/admin/orders?paid=0`);
                 }}
               >
                 ⏲️ Pending
               </MenuItem>
               <MenuItem
                 onClick={() => {
-                  router.push(`/admin/order?paid=3`);
+                  router.push(`/admin/orders?paid=1`);
                 }}
               >
                 ✖️ Cancelled by User
               </MenuItem>
               <MenuItem
                 onClick={() => {
-                  router.push(`/admin/order?paid=3`);
+                  router.push(`/admin/orders?paid=2`);
                 }}
               >
                 🎟️ Anomaly Transaction
               </MenuItem>
               <MenuItem
                 onClick={() => {
-                  router.push(`/admin/order?paid=4`);
+                  router.push(`/admin/orders?paid=3`);
+                }}
+              >
+                💵 Paid
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  router.push(`/admin/orders?paid=4`);
                 }}
               >
                 ☑️ Confirmed

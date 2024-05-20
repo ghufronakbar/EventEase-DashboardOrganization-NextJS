@@ -50,7 +50,7 @@ export function FormEventScan() {
         )
       ) {
         toast({
-          title: "Complete form to update event",
+          title: "Complete form to scan ticket",
           status: "warning",
           position: "bottom-right",
           isClosable: true,

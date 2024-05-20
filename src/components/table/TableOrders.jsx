@@ -4,21 +4,13 @@ import {
   Box,
   Button,
   Center,
-  Flex,
-  FormControl,
-  FormLabel,
-  Image,
-  Input,
   Modal,
-  ModalBody,
   ModalCloseButton,
   ModalContent,
   ModalFooter,
   ModalHeader,
   ModalOverlay,
-  Spacer,
   Table,
-  TableCaption,
   TableContainer,
   Tbody,
   Td,
@@ -26,500 +18,302 @@ import {
   Th,
   Thead,
   Tr,
-  useDisclosure,
   useToast,
+  Tooltip, // Import Tooltip
 } from "@chakra-ui/react";
-import { axiosInstance } from "../../lib/axios";
+import { FiCheckCircle } from "react-icons/fi";
+import { AiOutlineEyeInvisible } from "react-icons/ai";
+import { BsCheck2All, BsXCircle } from "react-icons/bs";
+import axiosInstanceAuthorization from "../../lib/axiosInstanceAuthorization";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 import { Loading } from "../Loading";
-import { useRef, useState } from "react";
-import { baseURL } from "@/lib/baseUrl";
-import { InfoOutlineIcon } from "@chakra-ui/icons";
+import { primaryColor, secondaryColor, tersierColor, white } from "@/lib/color";
+import {
+  CheckCircleIcon,
+  CheckIcon,
+  CloseIcon,
+  TimeIcon,
+  WarningTwoIcon,
+} from "@chakra-ui/icons";
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 
-export function TableOrders(status) {
+export function TableOrders() {
   const router = useRouter();
   const toast = useToast();
-  const [loading, setLoading] = useState(true);
-  const adminNotesRef = useRef();
-
+  const searchParams = useSearchParams();
+  const queryPaid = searchParams.get("paid");
   const [idHistory, setIdHistory] = useState();
-  const [isOpenCancel, setIsOpenCancel] = useState(false);
-  const [isOpenProcess, setIsOpenProcess] = useState(false);
-  const [isOpenReady, setIsOpenReady] = useState(false);
-  const [isOpenDone, setIsOpenDone] = useState(false);
-  const [isOpenInfo, setIsOpenInfo] = useState(false);
-  const [userNotes, setUserNotes] = useState(false);
-  const [adminNotes, setAdminNotes] = useState(false);
-  const [itemHistory, setItemHistory] = useState(false);
-  let i = 1;
-  let subtotal = 0;
-  let total = 0;
-  
+  const [isRejectOpen, setIsRejectOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
-  const { data: dataOrders, refetch: refetchDataMenu } = useQuery({
-    queryKey: ["orders"],
+  const {
+    data: dataHistory,
+    isLoading,
+    isError,
+    refetch: refetchDataEvent,
+  } = useQuery({
+    queryKey: ["histories", queryPaid],
     queryFn: async () => {
-      if (!status) {
-        const dataResponse = await axiosInstance.get(`/orders`);
-        setLoading(false);
-        return dataResponse;
-      } else {
-      }
-      const dataResponse = await axiosInstance.get(`/orders/${status}`);
-      setLoading(false);
-      return dataResponse;
+      const endpoint =
+        queryPaid == null ? "/histories" : `/histories?paid=${queryPaid}`;
+      const dataResponse = await axiosInstanceAuthorization.get(endpoint);
+      return dataResponse.data;
     },
   });
 
-  function formatDate(dateTimeString) {
-    const months = [
-      "Januari",
-      "Februari",
-      "Maret",
-      "April",
-      "Mei",
-      "Juni",
-      "Juli",
-      "Agustus",
-      "September",
-      "Oktober",
-      "November",
-      "Desember",
-    ];
-
-    const days = [
-      "Minggu",
-      "Senin",
-      "Selasa",
-      "Rabu",
-      "Kamis",
-      "Jumat",
-      "Sabtu",
-    ];
-
-    const dateTime = new Date(dateTimeString);
-    const hours = dateTime.getHours().toString().padStart(2, "0");
-    const minutes = dateTime.getMinutes().toString().padStart(2, "0");
-    const day = days[dateTime.getDay()];
-    const date = dateTime.getDate();
-    const month = months[dateTime.getMonth()];
-    const year = dateTime.getFullYear();
-    return `${hours}:${minutes} ${day}, ${date} ${month} ${year}`;
-  }
-
-  const handleCancelByAdmin = async (id_history) => {
-    try {
-      if (!adminNotesRef.current.value) {
-        toast({
-          title: "Write notes before cancel the order",
-          status: "warning",
-          position: "bottom-right",
-          isClosable: true,
-        });
-      } else {
-        const formData = {
-          admin_notes: adminNotesRef.current.value,
-        };
-
-        await axiosInstance.put(`/order/cancel/${id_history}`, formData);
-        toast({
-          title: "You have cancelled this order",
-          status: "info",
-          position: "bottom-right",
-          isClosable: true,
-        });
-        refetchDataMenu();
-        setIsOpenCancel(false);
-        setIsOpenProcess(false);
-      }
-    } catch (error) {
-      console.error("Error approving request:", error);
+  const noData = () => {
+    if (dataHistory && dataHistory.length === 0) {
+      return (
+        <Alert status="warning">
+          <AlertIcon />
+          There's no data event
+        </Alert>
+      );
     }
   };
 
-  const handleProcess = async (id_history) => {
+  const handleReject = async (id_history) => {
     try {
-      await axiosInstance.put(`/order/process/${id_history}`);
+      await axiosInstanceAuthorization.put(
+        `/order/anomaly-transaction/${id_history}`
+      );
       toast({
-        title: "You have process this order",
+        title: "Order has been marked as anomaly transaction",
         status: "info",
         position: "bottom-right",
         isClosable: true,
       });
-      refetchDataMenu();
-      setIsOpenProcess(false);
+      refetchDataEvent();
+      setIsRejectOpen(false);
     } catch (error) {
-      console.error("Error approving request:", error);
-    }
-  };
-
-  const handleReady = async (id_history) => {
-    try {
-      await axiosInstance.put(`/order/ready/${id_history}`);
+      console.error("Error marking order as anomaly transaction:", error);
       toast({
-        title: "This order is ready to pick/ship",
-        status: "info",
+        title:
+          error.response?.data?.message ||
+          "Error marking order as anomaly transaction",
+        status: "error",
         position: "bottom-right",
         isClosable: true,
       });
-      refetchDataMenu();
-      setIsOpenReady(false);
-    } catch (error) {
-      console.error("Error approving request:", error);
     }
   };
 
-  const handleDone = async (id_history) => {
+  const handleConfirm = async (id_history) => {
     try {
-      await axiosInstance.put(`/order/done/${id_history}`);
+      await axiosInstanceAuthorization.put(`/order/confirm/${id_history}`);
       toast({
-        title: "This order is completely done",
-        status: "info",
+        title: "Order has been confirmed",
+        status: "success",
         position: "bottom-right",
         isClosable: true,
       });
-      refetchDataMenu();
-      setIsOpenDone(false);
+      refetchDataEvent();
+      setIsConfirmOpen(false);
     } catch (error) {
-      console.error("Error approving request:", error);
+      console.error("Error confirming order:", error);
+      toast({
+        title: error.response?.data?.message || "Error confirming order",
+        status: "error",
+        position: "bottom-right",
+        isClosable: true,
+      });
     }
   };
 
-  if (loading) return <Loading />;
+  const modalRejectOrder = () => {
+    return (
+      <Modal isOpen={isRejectOpen} onClose={() => setIsRejectOpen(false)}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>
+            Are you sure want to mark this order as anomaly transaction?
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalFooter>
+            <Button
+              colorScheme="red"
+              onClick={() => {
+                handleReject(idHistory);
+              }}
+            >
+              Confirm
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    );
+  };
+
+  const modalConfirmOrder = () => {
+    return (
+      <Modal isOpen={isConfirmOpen} onClose={() => setIsConfirmOpen(false)}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Are you sure want to confirm this order?</ModalHeader>
+          <ModalCloseButton />
+          <ModalFooter>
+            <Button
+              color={white}
+              bg={primaryColor}
+              onClick={() => {
+                handleConfirm(idHistory);
+              }}
+            >
+              Confirm{" "}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    );
+  };
+
+  if (isLoading) return <Loading />;
+  if (isError) return <Text>Error loading data</Text>;
 
   return (
     <>
-      <Box p={8} borderWidth="1px" borderRadius="lg" overflow="hidden">
-        <TableContainer>
-          <Table>
-            <Thead>
-              <Tr>
-                <Th>No</Th>
-                <Th>Customer</Th>
-                <Th>Address</Th>
-                <Th>Status</Th>
-                <Th>
-                  <Center>Ordered At</Center>
-                </Th>
-                <Th>
-                  <Center>Finished At</Center>
-                </Th>
-                <Th></Th>
-              </Tr>
-            </Thead>
-            {dataOrders?.data.values.length == 0 ? (
-              <TableCaption>
-                <Alert status="info">
-                  <AlertIcon />
-                  There's No{" "}
-                  {status == 0
-                    ? "Pending"
-                    : status == 1
-                    ? "Cancel By User"
-                    : status == 2
-                    ? "Cancel By Admin"
-                    : status == 3
-                    ? "Paid"
-                    : status == 4
-                    ? "Process"
-                    : status == 5
-                    ? "Ready"
-                    : status == 6
-                    ? "Completed"
-                    : ""}{" "}
-                  Order
-                </Alert>
-              </TableCaption>
-            ) : (
-              ""
-            )}
-            <Tbody>
-              {dataOrders?.data.values.map((item) => (
-                <Tr key={item.id_history}>
-                  <Td>{i++}</Td>
+      <TableContainer>
+        <Button
+          bg={primaryColor}
+          color="white"
+          mb={2}
+          onClick={() => {
+            router.push(`/admin/event/add`);
+          }}
+        >
+          Add Event
+        </Button>
+
+        <Table variant="simple">
+          <Thead>
+            <Tr>
+              <Th>No</Th>
+              <Th>Name</Th>
+              <Th>Event & Ticket</Th>
+              <Th>Subtotal</Th>
+              <Th>Total</Th>
+              <Th>
+                <Center>Paid</Center>
+              </Th>
+              <Th>
+                <Center>Used</Center>
+              </Th>
+              <Th></Th>
+            </Tr>
+          </Thead>
+          <Tbody>
+            {dataHistory &&
+              dataHistory.map((event, index) => (
+                <Tr key={event.id_event}>
+                  <Td>{index + 1}</Td>
                   <Td>
-                    <Text as="b">{item.fullname}</Text>
-                    <Text>{item.email}</Text>
+                    <Text as="b">{event.fullname}</Text>
+                    <Text>{event.email}</Text>
                   </Td>
                   <Td>
-                    <Text>{item.address ? item.address : "Take Away"}</Text>
-                    <Text>{item.phone}</Text>
+                    <Text as="b">{event.event_name}</Text>
+                    <Text>{event.type_ticket}</Text>
                   </Td>
                   <Td>
-                    <Center>
-                      {item.status === 0 && (
-                        <Box
-                          as="button"
-                          borderRadius="md"
-                          bg="grey"
-                          color="white"
-                          px={4}
-                          h={8}
-                          onClick={() => {
-                            setIsOpenCancel(true);
-                            setIdHistory(item.id_history);
-                          }}
-                        >
-                          Pending
-                        </Box>
-                      )}
-                      {item.status === 1 && (
-                        <Box
-                          as="button"
-                          borderRadius="md"
-                          bg="orange"
-                          color="white"
-                          px={4}
-                          h={8}
-                        >
-                          Cancel By User
-                        </Box>
-                      )}
-                      {item.status === 2 && (
-                        <Box
-                          as="button"
-                          borderRadius="md"
-                          bg="red"
-                          color="white"
-                          px={4}
-                          h={8}
-                        >
-                          Cancel By Admin
-                        </Box>
-                      )}
-                      {item.status === 3 && (
-                        <Box
-                          as="button"
-                          borderRadius="md"
-                          bg="teal"
-                          color="white"
-                          px={4}
-                          h={8}
-                          onClick={() => {
-                            setIsOpenProcess(true);
-                            setIdHistory(item.id_history);
-                          }}
-                        >
-                          Paid
-                        </Box>
-                      )}
-                      {item.status === 4 && (
-                        <Box
-                          as="button"
-                          borderRadius="md"
-                          bg="blue"
-                          color="white"
-                          px={4}
-                          h={8}
-                          onClick={() => {
-                            setIsOpenReady(true);
-                            setIdHistory(item.id_history);
-                          }}
-                        >
-                          On Process
-                        </Box>
-                      )}
-                      {item.status === 5 && (
-                        <Box
-                          as="button"
-                          borderRadius="md"
-                          bg="green"
-                          color="white"
-                          px={4}
-                          h={8}
-                          onClick={() => {
-                            setIsOpenDone(true);
-                            setIdHistory(item.id_history);
-                          }}
-                        >
-                          Ready
-                        </Box>
-                      )}
-                      {item.status === 6 && (
-                        <Box
-                          as="button"
-                          borderRadius="md"
-                          bg="black"
-                          color="white"
-                          px={4}
-                          h={8}
-                        >
-                          Done
-                        </Box>
-                      )}
-                    </Center>
-                  </Td>
-                  <Td isNumeric>
-                    <Text>{formatDate(item.ordered_at)}</Text>
-                  </Td>
-                  <Td isNumeric>
                     <Text>
-                      {item.finished_at
-                        ? formatDate(item.finished_at)
-                        : "Not Yet Finished"}
+                      Rp {event.price} *{event.amount}
                     </Text>
                   </Td>
                   <Td>
-                    <InfoOutlineIcon
-                      onClick={() => {
-                        setIsOpenInfo(true);
-                        setUserNotes(item.user_notes);
-                        setAdminNotes(item.admin_notes);
-                        setItemHistory(
-                          <>
-                            <Table>
-                              <Thead>
-                                <Th>Product</Th>
-                                <Th>Amount</Th>
-                                <Th>Price</Th>
-                                <Th>Total</Th>
-                              </Thead>
-                              <Tbody>
-                                {item.item_history.map((item_history) => {
-                                  // Hitung subtotal
-                                  const subtotal =
-                                    item_history.amount * item_history.price;
-                                  // Tambahkan ke total
-                                  total += subtotal;
-                                  return (
-                                    <Tr key={item_history.id_item_history}>
-                                      <Td>{item_history.menu_name}</Td>
-                                      <Td>{item_history.amount}</Td>
-                                      <Td>{item_history.price}</Td>
-                                      <Td>Rp {subtotal}</Td>
-                                    </Tr>
-                                  );
-                                })}
-                              </Tbody>
-                              <Tr>
-                                <Th>Total</Th>
-                                <Th>Rp {total}</Th>
-                              </Tr>
-                              <TableCaption>Include tax and shipping cost</TableCaption>
-                            </Table>
-                          </>
-                        );
-                      }}
-                    />
+                    <Text>Rp {event.total}</Text>
+                  </Td>
+                  <Td>
+                    <Center>
+                      {event.paid === 0 ? (
+                        <Tooltip label="Pending">
+                          <TimeIcon color={tersierColor} />
+                        </Tooltip>
+                      ) : event.paid === 1 ? (
+                        <Tooltip label="Cancelled By User">
+                          <CloseIcon color={secondaryColor} />
+                        </Tooltip>
+                      ) : event.paid === 2 ? (
+                        <Tooltip label="Mark as Anomaly Transaction">
+                          <WarningTwoIcon color="red" />
+                        </Tooltip>
+                      ) : event.paid === 3 ? (
+                        <Tooltip label="Paid">
+                          <CheckIcon color={primaryColor} />
+                        </Tooltip>
+                      ) : event.paid === 4 ? (
+                        <Tooltip label="Confirmed">
+                          <CheckCircleIcon color={primaryColor} />
+                        </Tooltip>
+                      ) : null}
+                    </Center>
+                  </Td>
+                  <Td>
+                    <Center>
+                      {event.used == 1 ? (
+                        <BsCheck2All />
+                      ) : event.used == 0 ? (
+                        <BsXCircle />
+                      ) : null}
+                    </Center>
+                  </Td>
+                  <Td>
+                    <Center>
+                      {event.paid === 0 ? (
+                        <></>
+                      ) : event.paid === 1 ? (
+                        <></>
+                      ) : event.paid === 2 ? (
+                        <></>
+                      ) : event.paid === 3 ? (
+                        <>
+                          <Box
+                            bg="red"
+                            as="button"
+                            p={2}
+                            borderRadius={8}
+                            m={2}
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
+                            onClick={() => {
+                              setIdHistory(event.id_history);
+                              setIsRejectOpen(true);
+                            }}
+                          >
+                            <AiOutlineEyeInvisible color="white" />
+                          </Box>
+                          <Box
+                            bg={primaryColor}
+                            as="button"
+                            p={2}
+                            borderRadius={8}
+                            m={2}
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
+                            onClick={() => {
+                              setIdHistory(event.id_history);
+                              setIsConfirmOpen(true);
+                            }}
+                          >
+                            <FiCheckCircle color="white" />
+                          </Box>
+                        </>
+                      ) : event.paid === 4 ? (
+                        <></>
+                      ) : null}
+                    </Center>
                   </Td>
                 </Tr>
               ))}
-            </Tbody>
-          </Table>
-        </TableContainer>
-      </Box>
-      <Modal isOpen={isOpenCancel} onClose={() => setIsOpenCancel(false)}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Cancel this order</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={6}>
-            <FormControl>
-              <FormLabel>Why you want to cancel?</FormLabel>
-              <Input ref={adminNotesRef} />
-            </FormControl>
-          </ModalBody>
-          <ModalFooter>
-            <Button onClick={() => setIsOpenCancel(false)} mr={3}>
-              Cancel
-            </Button>{" "}
-            <Button
-              colorScheme="red"
-              onClick={() => {
-                handleCancelByAdmin(idHistory);
-              }}
-            >
-              Submit
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-      <Modal isOpen={isOpenProcess} onClose={() => setIsOpenProcess(false)}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Cancel / Process</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={6}>
-            <FormControl>
-              <FormLabel>Why you want to cancel?</FormLabel>
-              <Input ref={adminNotesRef} />
-            </FormControl>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              colorScheme="red"
-              onClick={() => {
-                handleCancelByAdmin(idHistory);
-              }}
-              mr={3}
-            >
-              Cancel
-            </Button>
-            <Button
-              colorScheme="blue"
-              onClick={() => {
-                handleProcess(idHistory);
-              }}
-            >
-              Process
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-      <Modal isOpen={isOpenReady} onClose={() => setIsOpenReady(false)}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Is the order ready?</ModalHeader>
-          <ModalCloseButton />
-          <ModalFooter>
-            <Button
-              colorScheme="green"
-              onClick={() => {
-                handleReady(idHistory);
-              }}
-            >
-              Yes!
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-      <Modal isOpen={isOpenDone} onClose={() => setIsOpenDone(false)}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Is the order ready?</ModalHeader>
-          <ModalCloseButton />
-          <ModalFooter>
-            <Button
-              colorScheme="blue"
-              onClick={() => {
-                handleDone(idHistory);
-              }}
-            >
-              Finish
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-      <Modal isOpen={isOpenInfo} onClose={() => setIsOpenInfo(false)} size='xl'>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Notes</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <Text as="b">Customer:</Text>
-            <Text>{userNotes}</Text>
-          </ModalBody>
-          <ModalBody>
-            <Text as="b">Admin:</Text>
-            <Text>{adminNotes}</Text>
-          </ModalBody>
-          <ModalBody>            
-            {itemHistory}
-          </ModalBody>
-          <ModalFooter></ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Tbody>
+        </Table>
+        {noData()}
+      </TableContainer>
+      {modalRejectOrder()}
+      {modalConfirmOrder()}
     </>
   );
 }

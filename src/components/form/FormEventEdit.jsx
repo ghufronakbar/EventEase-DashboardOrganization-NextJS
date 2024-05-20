@@ -20,7 +20,6 @@ import {
   Td,
   AlertIcon,
   Alert,
-  useDisclosure,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -40,7 +39,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Loading } from "../Loading";
 import axiosInstanceAuthorization from "@/lib/axiosInstanceAuthorization";
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
-import { primaryColor, primaryColor2, white } from "@/lib/color";
+import { primaryColor, white } from "@/lib/color";
 
 export function FormEventEdit() {
   const router = useRouter();
