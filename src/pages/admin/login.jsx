@@ -19,7 +19,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { LockIcon } from "@chakra-ui/icons";
-import axiosInstance from "@/lib/axiosInstance"; // Adjust the import according to your file structure
+import {axiosInstance} from "@/lib/axiosInstance"; // Adjust the import according to your file structure
 import { HeadAdmin } from "@/components/HeadAdmin"; // Adjust the import according to your file structure
 import { primaryColor, white } from "@/lib/color";
 

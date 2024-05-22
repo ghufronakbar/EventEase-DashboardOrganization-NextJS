@@ -23,7 +23,7 @@ export default function Custom404() {
           color="blue"
           cursor="pointer"
           onClick={() => {
-            router.push(`/admin/dashboard`);
+            router.push(`/admin/event`);
           }}
         >
           Dashboard

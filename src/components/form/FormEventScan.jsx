@@ -1,27 +1,19 @@
 import {
   Box,
   Button,
-  Center,
   FormControl,
-  Image,
   Input,
-  Spacer,
   Flex,
-  FormLabel,
   Stack,
   VStack,
-  Textarea,
   useToast,
-  AlertIcon,
-  Alert,
-  Text,
   Heading,
 } from "@chakra-ui/react";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/router";
 import { Loading } from "../Loading";
 import axiosInstanceAuthorization from "@/lib/axiosInstanceAuthorization";
-import { primaryColor, secondaryColor, tersierColor, white } from "@/lib/color";
+import { primaryColor, white } from "@/lib/color";
 
 export function FormEventScan() {
   const router = useRouter();
