@@ -27,7 +27,7 @@ function Copyright(props) {
   return (
     <Text align="center" {...props}>
       {"Copyright © "}
-      <Link color="blue.500" href={process.env.BASE_URL}>
+      <Link color="blue.500" href={process.env.NEXT_PUBLIC_URL}>
         Event Ease
       </Link>{" "}
       {new Date().getFullYear()}
