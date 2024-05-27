@@ -67,12 +67,12 @@ export function SidebarMenu() {
             <MenuItem onClick={() => router.push(`/admin/event/scan`)}>🔎 Scan Tickets</MenuItem>
             <SubMenu label="🧾 Events">
               <MenuItem onClick={() => router.push(`/admin/event`)}>📑 All Event</MenuItem>
-              <MenuItem onClick={() => router.push(`/admin/event?time=past&status=`)}>⏳ Past Event</MenuItem>
-              <MenuItem onClick={() => router.push(`/admin/event?time=on-going&status=`)}>🎊 On Going</MenuItem>
-              <MenuItem onClick={() => router.push(`/admin/event?time=soon&status=`)}>🕝 Coming Soon</MenuItem>
-              <MenuItem onClick={() => router.push(`/admin/event?status=0&time=`)}>⌚ Waiting for approval</MenuItem>
-              <MenuItem onClick={() => router.push(`/admin/event?status=1&time=`)}>❌ Rejected by Admin</MenuItem>
-              <MenuItem onClick={() => router.push(`/admin/event?status=2&time=`)}>✅ Approved</MenuItem>
+              <MenuItem onClick={() => router.push(`/admin/event?time=past`)}>⏳ Past Event</MenuItem>
+              <MenuItem onClick={() => router.push(`/admin/event?time=on-going`)}>🎊 On Going</MenuItem>
+              <MenuItem onClick={() => router.push(`/admin/event?time=soon`)}>🕝 Coming Soon</MenuItem>
+              <MenuItem onClick={() => router.push(`/admin/event?status=0`)}>⌚ Waiting for approval</MenuItem>
+              <MenuItem onClick={() => router.push(`/admin/event?status=1`)}>❌ Rejected by Admin</MenuItem>
+              <MenuItem onClick={() => router.push(`/admin/event?status=2`)}>✅ Approved</MenuItem>
             </SubMenu>
             <SubMenu label="📒 Orders">
               <MenuItem onClick={() => router.push(`/admin/orders`)}>🎫 All Order</MenuItem>
