@@ -1,10 +1,11 @@
-import { Box, Center, Stack, Text } from "@chakra-ui/react";
+import { Box, Center, HStack, Stack, Text, VStack } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { Menu, MenuItem, Sidebar, SubMenu } from "react-pro-sidebar";
 import { useQuery } from "@tanstack/react-query";
 import axiosInstanceAuthorization from "@/lib/axiosInstanceAuthorization";
-import { secondaryColor } from "@/lib/color";
+import { primaryColor, secondaryColor, tersierColor } from "@/lib/color";
 import Image from "next/image";
+import { CheckCircleIcon, CheckIcon, CloseIcon, NotAllowedIcon, TimeIcon, WarningTwoIcon } from "@chakra-ui/icons";
 
 export function SidebarMenu() {
   const router = useRouter();
@@ -76,11 +77,12 @@ export function SidebarMenu() {
             </SubMenu>
             <SubMenu label="📒 Orders">
               <MenuItem onClick={() => router.push(`/admin/orders`)}>🎫 All Order</MenuItem>
-              <MenuItem onClick={() => router.push(`/admin/orders?paid=0`)}>⏲️ Pending</MenuItem>
-              <MenuItem onClick={() => router.push(`/admin/orders?paid=1`)}>✖️ Cancelled by User</MenuItem>
-              <MenuItem onClick={() => router.push(`/admin/orders?paid=2`)}>🎟️ Anomaly Transaction</MenuItem>
-              <MenuItem onClick={() => router.push(`/admin/orders?paid=3`)}>💵 Paid</MenuItem>
-              <MenuItem onClick={() => router.push(`/admin/orders?paid=4`)}>☑️ Confirmed</MenuItem>
+              <MenuItem onClick={() => router.push(`/admin/orders?paid=0`)}><HStack><TimeIcon color={tersierColor} /><Text>Pending</Text> </HStack></MenuItem>
+              <MenuItem onClick={() => router.push(`/admin/orders?paid=1`)}><HStack><CloseIcon color={secondaryColor} /><Text>Cancelled by User</Text> </HStack></MenuItem>
+              <MenuItem onClick={() => router.push(`/admin/orders?paid=2`)}><HStack><WarningTwoIcon color="red" /><Text>Anomaly Transaction</Text> </HStack></MenuItem>
+              <MenuItem onClick={() => router.push(`/admin/orders?paid=3`)}><HStack><CheckIcon color={primaryColor}/><Text>Paid</Text> </HStack></MenuItem>
+              <MenuItem onClick={() => router.push(`/admin/orders?paid=4`)}><HStack> <CheckCircleIcon color={primaryColor} /><Text>Confirmed</Text> </HStack></MenuItem>
+              <MenuItem onClick={() => router.push(`/admin/orders?paid=5`)}><HStack><NotAllowedIcon color='red'/><Text>Expired Time</Text> </HStack></MenuItem>
             </SubMenu>
             <MenuItem onClick={handleLogout}>🔒 Logout</MenuItem>
           </Menu>

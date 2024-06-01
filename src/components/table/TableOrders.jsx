@@ -33,6 +33,7 @@ import {
   CheckCircleIcon,
   CheckIcon,
   CloseIcon,
+  NotAllowedIcon,
   TimeIcon,
   WarningTwoIcon,
 } from "@chakra-ui/icons";
@@ -245,6 +246,10 @@ export function TableOrders() {
                       ) : event.paid === 4 ? (
                         <Tooltip label="Confirmed">
                           <CheckCircleIcon color={primaryColor} />
+                        </Tooltip>
+                      ) : event.paid === 5 ? (
+                        <Tooltip label="Expired Time">
+                          <NotAllowedIcon color='red' />
                         </Tooltip>
                       ) : null}
                     </Center>
