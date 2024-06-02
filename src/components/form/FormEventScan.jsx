@@ -9,11 +9,12 @@ import {
   useToast,
   Heading,
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Loading } from "../Loading";
 import axiosInstanceAuthorization from "@/lib/axiosInstanceAuthorization";
 import { primaryColor, white } from "@/lib/color";
+import { Html5Qrcode, Html5QrcodeScanner } from "html5-qrcode";
 
 export function FormEventScan() {
   const router = useRouter();
@@ -26,7 +27,81 @@ export function FormEventScan() {
   const [ucIdTicket, setUcIdTicket] = useState("");
   const [ucAmount, setUcAmount] = useState("");
   const [ucDate, setUcDate] = useState("");
+  const [scannerResult, setScannerResult] = useState(null);
+  const [scanner, setScanner] = useState(null);
   const unique_code = `${ucIdHistory}/${ucIdUser}/${ucIdOrganization}/${ucIdEvent}/${ucIdTicket}/${ucAmount}/${ucDate}`;
+
+  // Define success and error functions outside of useEffect
+  function success(result) {
+    if (scanner) {
+      scanner.clear();
+    }
+    setScannerResult(result);
+  }
+
+  function error(err) {
+    console.warn(err);
+  }
+
+  useEffect(() => {
+    const newScanner = new Html5QrcodeScanner(`reader`, {
+      qrbox: {
+        width: 250,
+        height: 250,
+      },
+      fps: 5,
+    });
+    setScanner(newScanner);
+
+    newScanner.render(success, error);
+
+    // Cleanup on component unmount
+    return () => {
+      if (scanner) {
+        scanner.clear();
+      }
+    };
+  }, []);
+
+  const scanQR = async () => {
+    try {
+      const response = await axiosInstanceAuthorization.put(`/order/scan-ticket`, {
+        unique_code: scannerResult,
+      });
+      toast({
+        title: response.data.message,
+        status: "success",
+        position: "bottom-right",
+        isClosable: true,
+      });
+      setScannerResult(null);
+      setTimeout(() => {
+        if (scanner) {
+          scanner.render(success, error);
+        }
+      }, 3000); 
+    } catch (error) {
+      console.log(error);
+      toast({
+        title: error?.response?.data.message,
+        status: "error",
+        position: "bottom-right",
+        isClosable: true,
+      });
+      setScannerResult(null);
+      setTimeout(() => {
+        if (scanner) {
+          scanner.render(success, error);
+        }
+      }, 3000); // Restart the scanner after 5 seconds
+    }
+  };
+
+  useEffect(() => {
+    if (scannerResult) {
+      scanQR();
+    }
+  }, [scannerResult]);
 
   const handleScanTicket = async () => {
     try {
@@ -49,26 +124,21 @@ export function FormEventScan() {
         });
         return;
       }
-      await axiosInstanceAuthorization.put(`/order/scan-ticket`, {
-        unique_code,
-      });
+      const response = await axiosInstanceAuthorization.put(
+        `/order/scan-ticket`,
+        {
+          unique_code,
+        }
+      );
       toast({
-        title: "Success scanning ticket",
+        title: response.data.message,
         status: "success",
         position: "bottom-right",
         isClosable: true,
       });
     } catch (error) {
-      let errorMessage = "Error scanning ticket";
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        errorMessage = error.response.data.message;
-      }
       toast({
-        title: errorMessage,
+        title: error.response.data.message,
         status: "error",
         position: "bottom-right",
         isClosable: true,
@@ -91,6 +161,16 @@ export function FormEventScan() {
               flex={18}
             >
               <Heading my={4}>Scan Ticket</Heading>
+              <Box
+                px={80}
+                py={8}
+                borderWidth="1px"
+                borderRadius="lg"
+                overflow="hidden"
+                my={4}
+              >                
+                <div id="reader"></div>
+              </Box>
               <Stack spacing={4}>
                 <FormControl>
                   <Flex>
